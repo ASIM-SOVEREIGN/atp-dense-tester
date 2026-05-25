@@ -1,0 +1,33 @@
+name: Nightly ATP Tests
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Run at 2 AM daily
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Run dense test suite
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SOVEREIGN_ENDPOINTS: ${{ secrets.SOVEREIGN_ENDPOINTS }}
+          ATP_BRIDGE_PUBLIC_KEY: ${{ secrets.ATP_BRIDGE_PUBLIC_KEY }}
+        run: |
+          python scripts/run_dense_test.py
+      
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: results/
