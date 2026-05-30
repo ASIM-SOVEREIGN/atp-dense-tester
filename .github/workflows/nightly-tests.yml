@@ -2,34 +2,31 @@ name: Nightly ATP Tests
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # Run at 2 AM daily
-  workflow_dispatch:  # Allow manual trigger
+    - cron: '0 2 * * *'
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true  # Forces Node 24, removes deprecation warning
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
       
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - name: Make test script executable
+        run: chmod +x run_dense_test.sh
       
       - name: Run dense test suite
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          SOVEREIGN_ENDPOINTS: ${{ secrets.SOVEREIGN_ENDPOINTS }}
-          ATP_BRIDGE_PUBLIC_KEY: ${{ secrets.ATP_BRIDGE_PUBLIC_KEY }}
-        run: |
-          python scripts/run_dense_test.py
+          API_URL: https://vexr-ultra.onrender.com
+        run: ./run_dense_test.sh
       
       - name: Upload results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: results/
+          path: |
+            results/
+            *.json
+            *.log
